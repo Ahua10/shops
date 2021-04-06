@@ -8,6 +8,7 @@ const home = () => import('./../views/home/home')
 const category = () => import('./../views/category/category')
 const shopcart = () => import('./../views/shopcart/shopcart')
 const mine = () => import('./../views/mine/mine')
+const detail = () => import('./../views/detail/detail')
 
 const routes = [
   { path: '/', redirect: 'home' },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/category', component: category, meta: { title: '分类' } },
   { path: '/shopcart', component: shopcart, meta: { title: '购物车' } },
   { path: '/mine', component: mine, meta: { title: '我的' } },
+  { path: '/detail/:iid', component: detail,meta: { title: '详情页' } }
 ]
 
 const router = new VueRouter({

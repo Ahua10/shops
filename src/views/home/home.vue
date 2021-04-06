@@ -1,120 +1,32 @@
 <template>
-  <div id="home">
-    <nav-bar class="home_nav">
-      <div slot="center">购物街</div>
-    </nav-bar>
-    <scroll class="content">
-      <swiper></swiper>
-      <recommend-view :recommend="recommends"></recommend-view>
-      <feature-view></feature-view>
-      <tab-control class="tab-control" :titles="['流行', '新款', '精选']"></tab-control>
-
-      <ul>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-        <li>22</li>
-        <li>11</li>
-        <li>11</li>
-        <li>11</li>
-      </ul>
-    </scroll>
-
-    <ul>
-      <li>hdlsa</li>
-      <li>hdlsa</li>
-      <li>hdlsa</li>
-      <li>hdlsa</li>
-      <li>hdlsa</li>
-    </ul>
+  <div id="home"   v-infinite-scroll="load" style="overflow:auto">
+    <el-backtop target="#home" style="right: 20px;bottom: 60px;"></el-backtop>
+    <mt-header fixed title="女人街" style="z-index:10;"></mt-header>
+    <!-- <Scroll class="content"> -->
+    <div class="content">
+      <Swiper :banners="banners" />
+      <Recommend-view :recommend="recommends" />
+      <Feature-view />
+      <Tab-control
+        class="tab-control"
+        @tabClick="tabClick"
+        :titles="['流行', '热销', '上新']"
+      />
+      <Goods-list :goods="showGoods"/>
+    </div>
+    <!-- </Scroll> -->
+    <!-- <Backtop/> -->
   </div>
 </template>
 <script>
-import navBar from "./../../components/common/navbar/navBar";
-import swiper from "./../../components/common/swiper";
-import tabControl from "./../../components/content/tabControl/tabControl";
-import scroll from "./../../components/common/scroll/scroll";
+import { getHomeData, getHomeGoods } from "./../../network/home";
+import Swiper from "./../../common/swiper";
+import TabControl from "./../../common/TabControl";
+import Scroll from "./../../common/scroll";
 
-import recommendView from "./childs/recomment";
-import featureView from "./childs/feature";
-
-import { getHomeData } from "./../../network/home";
+import RecommendView from "./../../common/home/recommend";
+import FeatureView from "./../../common/home/featureView";
+import GoodsList from "./../../common/home/goods/GoodsList";
 
 export default {
   name: "home",
@@ -122,50 +34,93 @@ export default {
     return {
       banners: [],
       recommends: [],
+      goods: {
+        pop: { page: 0, list: [] },
+        new: { page: 0, list: [] },
+        sell: { page: 0, list: [] },
+      },
+      currentType: "pop",
     };
   },
+  computed: {
+    showGoods() {
+      return this.goods[this.currentType].list;
+    },
+  },
   components: {
-    navBar,
-    swiper,
-    tabControl,
-    scroll,
-    recommendView,
-    featureView,
+    Swiper,
+    TabControl,
+    Scroll,
+
+    RecommendView,
+    FeatureView,
+    GoodsList,
   },
   created() {
-    getHomeData().then((res) => {
-      this.banners = res.data.banner.list;
-      this.recommends = res.data.recommend.list;
-      console.log(res.data.recommend.list);
-    });
+    this.getHomeData();
+
+    this.getHomeGoods("new");
+    this.getHomeGoods("pop");
+    this.getHomeGoods("sell");
+  },
+  methods: {
+    tabClick(index) {
+      switch (index) {
+        case 0:
+          this.currentType = "pop";
+          break;
+        case 1:
+          this.currentType = "new";
+          break;
+        case 2:
+          this.currentType = "sell";
+          break;
+      }
+    },
+    load() {
+      this.getHomeGoods(this.currentType)
+    },
+    /**
+     * 网络请求方法
+     *
+     */
+    getHomeData() {
+      getHomeData().then((res) => {
+        this.banners = res.data.banner.list;
+        this.recommends = res.data.recommend.list;
+        // res.data.banner.list;
+      });
+    },
+    getHomeGoods(type) {
+      const page = this.goods[type].page + 1;
+      getHomeGoods(type, page).then((res) => {
+        this.goods[type].list.push(...res.data.list);
+        this.goods[type].page += 1;
+        console.log(type, res.data.list);
+      });
+    },
   },
 };
 </script>
 <style scoped>
 #home {
-  padding-top: 44px;
+  padding-top: 40px;
   height: 100vh;
   position: relative;
 }
-.home_nav {
-  background-color: var(--color-tint);
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 9;
-}
+
 .tab-control {
   position: sticky;
-  top: 44px;
+  top: 40px;
+  z-index: 9;
 }
 .content {
-  height: 300px;
   overflow: hidden;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 44px;
+
+  /* position: absolute;
+  top: 40px;
   bottom: 49px;
+  left: 0;
+  right: 0; */
 }
 </style>

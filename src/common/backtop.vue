@@ -1,6 +1,6 @@
 <template>
-    <div id="category">
-      jkj
+    <div class="backtop">
+      <img src="./../assets/img/common/top.png" alt="">
     </div>
 </template>
 
